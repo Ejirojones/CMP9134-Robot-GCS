@@ -1,9 +1,5 @@
 """
 Robot API client scaffold.
-
-Provides a small async wrapper around the Virtual Robot REST API.
-Students should extend this with retry logic, error handling, and
-any additional endpoints exposed by the robot simulator.
 """
 
 from __future__ import annotations
@@ -14,7 +10,7 @@ from typing import Any
 
 import httpx
 
-ROBOT_API_URL = os.getenv("ROBOT_API_URL", "http://localhost:5000")
+ROBOT_API_URL = os.getenv("ROBOT_API_URL", "http://robot-api:5000")
 
 logger = logging.getLogger(__name__)
 
@@ -40,14 +36,26 @@ class RobotClient:
             raise RobotConnectionError(f"Robot unreachable: {exc}") from exc
 
     async def move(self, x: int, y: int) -> dict[str, Any]:
-        """Send a move command to the robot."""
-        raise NotImplementedError("Move command not implemented yet")  # TODO: implement this method
+        """Send move command to robot."""
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{self._base}/api/move", json={"x": x, "y": y}, timeout=10.0
+                )
+                response.raise_for_status()
+                return response.json()
+        except Exception as exc:
+            raise RobotConnectionError(f"Move failed: {exc}") from exc
 
     async def reset(self) -> dict[str, Any]:
-        """Reset the robot simulation."""
-        raise NotImplementedError("Reset command not implemented yet")  # TODO: implement this method
-    
-    # TODO: add get_map(), get_sensors(), etc. as needed
+        """Reset robot to starting position."""
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(f"{self._base}/api/reset", timeout=10.0)
+                response.raise_for_status()
+                return response.json()
+        except Exception as exc:
+            raise RobotConnectionError(f"Reset failed: {exc}") from exc
 
 
 # Module-level singleton used by main.py

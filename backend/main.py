@@ -33,7 +33,7 @@ that FastAPI generates automatically from your code (no extra work required).
 import logging
 import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 # 1. ADD THIS IMPORT NEAR THE TOP:
@@ -212,3 +212,21 @@ async def get_status():
 #             await asyncio.sleep(0.5)   # push an update every 500 ms
 #     except WebSocketDisconnect:
 #         logger.info("Telemetry client disconnected")
+@app.post("/api/move")
+async def move_robot(x: int, y: int):
+    """Send a move command to the robot."""
+    try:
+        result = await robot.move(x, y)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+
+@app.post("/api/reset")
+async def reset_robot():
+    """Reset the robot to its starting position."""
+    try:
+        result = await robot.reset()
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=str(e))
