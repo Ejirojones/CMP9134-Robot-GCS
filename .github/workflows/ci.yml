@@ -107,7 +107,9 @@ jobs:
       # just a placeholder for your tests. Implement your actual test commands here, e.g. "pytest ..."
       - name: Run tests with coverage
         run: |
-          true
+          pip install pytest pytest-cov -r backend/requirements.txt
+          cd backend
+          pytest tests/ -v --cov=. --cov-report=term-missing
 
 
 
