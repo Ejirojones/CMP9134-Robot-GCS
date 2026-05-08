@@ -6,7 +6,7 @@ Handles users and mission logs.
 import sqlite3
 import os
 
-DB_PATH = os.getenv("DB_PATH", "/workspace/backend/gcs.db")
+DB_PATH = os.getenv("DB_PATH", "/tmp/gcs.db")
 
 
 def get_connection():
