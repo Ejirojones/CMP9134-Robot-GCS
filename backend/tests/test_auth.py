@@ -20,13 +20,13 @@ def test_password_hashing():
 def test_password_verification_correct():
     """Correct password should verify successfully."""
     hashed = hash_password("mypassword")
-    assert verify_password("mypassword", hashed) == True
+    assert verify_password("mypassword", hashed)
 
 
 def test_password_verification_wrong():
     """Wrong password should fail verification."""
     hashed = hash_password("mypassword")
-    assert verify_password("wrongpassword", hashed) == False
+    assert not verify_password("wrongpassword", hashed)
 
 
 def test_token_creation():
