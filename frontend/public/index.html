@@ -4,83 +4,429 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GCS — Dashboard</title>
+  <title>Ground Control Station</title>
   <style>
     * {
-      box-sizing: border-box;
       margin: 0;
       padding: 0;
+      box-sizing: border-box;
     }
 
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f4f6f9;
-      color: #0a2342;
+      background: #0a0e1a;
+      color: #e0e6ff;
+      font-family: 'Courier New', monospace;
+      min-height: 100vh;
     }
 
     header {
-      background: #0a2342;
-      color: white;
-      padding: 0.75rem 1.5rem;
+      background: #0d1225;
+      border-bottom: 1px solid #1e3a5f;
+      padding: 12px 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
     header h1 {
-      font-size: 1.1rem;
+      color: #4fc3f7;
+      font-size: 1.2rem;
       letter-spacing: 2px;
-    }
-
-    .conn-indicator {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      display: inline-block;
-      margin-right: 6px;
-    }
-
-    .conn-indicator.ok {
-      background: #26a69a;
-    }
-
-    .conn-indicator.error {
-      background: #c62828;
-    }
-
-    main {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1rem;
-      padding: 1rem;
-    }
-
-    .stat-card {
-      background: white;
-      border-radius: 8px;
-      padding: 1rem 1.2rem;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
-      text-align: center;
-    }
-
-    .stat-card .label {
-      font-size: .72rem;
-      color: #5a6a85;
       text-transform: uppercase;
     }
 
-    .stat-card .value {
-      font-size: 1.6rem;
-      font-weight: 700;
-      margin-top: 6px;
+    #user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.85rem;
     }
 
-    .stat-card.warn .value {
-      color: #e8a020;
+    #role-badge {
+      background: #1a3a5c;
+      border: 1px solid #4fc3f7;
+      color: #4fc3f7;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
-    .stat-card.danger .value {
-      color: #c62828;
+    #role-badge.commander {
+      border-color: #ff6b35;
+      color: #ff6b35;
+      background: #3a1a0a;
+    }
+
+    #role-badge.viewer {
+      border-color: #4fc3f7;
+      color: #4fc3f7;
+      background: #0a1a3a;
+    }
+
+    #logout-btn {
+      background: transparent;
+      border: 1px solid #e74c3c;
+      color: #e74c3c;
+      padding: 4px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.8rem;
+    }
+
+    #logout-btn:hover {
+      background: #e74c3c;
+      color: white;
+    }
+
+    #login-screen {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 90vh;
+    }
+
+    .login-box {
+      background: #0d1225;
+      border: 1px solid #1e3a5f;
+      border-radius: 8px;
+      padding: 40px;
+      width: 360px;
+    }
+
+    .login-box h2 {
+      color: #4fc3f7;
+      margin-bottom: 24px;
+      text-align: center;
+      letter-spacing: 2px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      color: #8899aa;
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      background: #0a0e1a;
+      border: 1px solid #1e3a5f;
+      color: #e0e6ff;
+      padding: 10px;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9rem;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #4fc3f7;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.9rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-top: 8px;
+    }
+
+    .btn-primary {
+      background: #1a6fa8;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #2389cc;
+    }
+
+    .btn-danger {
+      background: #c0392b;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #e74c3c;
+    }
+
+    #login-error {
+      color: #e74c3c;
+      font-size: 0.8rem;
+      margin-top: 8px;
+      text-align: center;
+      min-height: 20px;
+    }
+
+    .tab-btns {
+      display: flex;
+      margin-bottom: 24px;
+      border-bottom: 1px solid #1e3a5f;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      background: transparent;
+      border: none;
+      color: #8899aa;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.85rem;
+    }
+
+    .tab-btn.active {
+      color: #4fc3f7;
+      border-bottom: 2px solid #4fc3f7;
+    }
+
+    #dashboard {
+      display: none;
+      padding: 24px;
+      gap: 24px;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto;
+    }
+
+    #dashboard.visible {
+      display: grid;
+    }
+
+    .panel {
+      background: #0d1225;
+      border: 1px solid #1e3a5f;
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    .panel h3 {
+      color: #4fc3f7;
+      font-size: 0.85rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #1e3a5f;
+    }
+
+    .status-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .status-card {
+      background: #0a0e1a;
+      border: 1px solid #1e3a5f;
+      border-radius: 6px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .status-card .label {
+      font-size: 0.7rem;
+      color: #8899aa;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .status-card .value {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: #4fc3f7;
+    }
+
+    .status-card .value.warning {
+      color: #f39c12;
+    }
+
+    .status-card .value.danger {
+      color: #e74c3c;
+    }
+
+    .status-card .value.ok {
+      color: #2ecc71;
+    }
+
+    #connection-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      margin-bottom: 16px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #e74c3c;
+    }
+
+    .dot.connected {
+      background: #2ecc71;
+      animation: pulse 2s infinite;
+    }
+
+    .dot.reconnecting {
+      background: #f39c12;
+      animation: pulse 0.5s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.3;
+      }
+    }
+
+    #robot-grid {
+      display: grid;
+      grid-template-columns: repeat(21, 1fr);
+      gap: 1px;
+      background: #1e3a5f;
+      border: 1px solid #1e3a5f;
+      border-radius: 4px;
+      overflow: hidden;
+      aspect-ratio: 1;
+    }
+
+    .grid-cell {
+      background: #0a0e1a;
+      aspect-ratio: 1;
+    }
+
+    .grid-cell.robot {
+      background: #ff6b35;
+      border-radius: 2px;
+      position: relative;
+    }
+
+    .grid-cell.robot::after {
+      content: '🤖';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 0.6rem;
+    }
+
+    .coord-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .coord-inputs input {
+      background: #0a0e1a;
+      border: 1px solid #1e3a5f;
+      color: #e0e6ff;
+      padding: 10px;
+      border-radius: 4px;
+      font-family: inherit;
+      text-align: center;
+      font-size: 1rem;
+      width: 100%;
+    }
+
+    .coord-inputs input:focus {
+      outline: none;
+      border-color: #4fc3f7;
+    }
+
+    .coord-inputs label {
+      display: block;
+      font-size: 0.7rem;
+      color: #8899aa;
+      margin-bottom: 4px;
+      text-align: center;
+    }
+
+    #move-result {
+      margin-top: 12px;
+      font-size: 0.8rem;
+      min-height: 20px;
+      text-align: center;
+    }
+
+    .success {
+      color: #2ecc71;
+    }
+
+    .error {
+      color: #e74c3c;
+    }
+
+    #logs-container {
+      max-height: 200px;
+      overflow-y: auto;
+      font-size: 0.75rem;
+    }
+
+    .log-entry {
+      padding: 6px 0;
+      border-bottom: 1px solid #0d1225;
+      display: grid;
+      grid-template-columns: auto auto 1fr;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .log-entry .time {
+      color: #8899aa;
+    }
+
+    .log-entry .action {
+      color: #4fc3f7;
+      font-weight: bold;
+    }
+
+    .log-entry .action.MOVE {
+      color: #2ecc71;
+    }
+
+    .log-entry .action.RESET {
+      color: #f39c12;
+    }
+
+    .log-entry .action.MOVE_FAILED {
+      color: #e74c3c;
+    }
+
+    .log-entry .user {
+      color: #bb86fc;
+    }
+
+    #commander-only {
+      font-size: 0.8rem;
+      color: #f39c12;
+      text-align: center;
+      padding: 12px;
+      border: 1px dashed #f39c12;
+      border-radius: 4px;
+      display: none;
     }
   </style>
 </head>
@@ -88,63 +434,272 @@
 <body>
 
   <header>
-    <h1>⚙ GROUND CONTROL STATION</h1>
-    <div>
-      <span id="conn-dot" class="conn-indicator error"></span>
-      <span id="conn-label" style="font-size:.8rem;color:#ccc">Connecting…</span>
+    <h1>⚡ Ground Control Station</h1>
+    <div id="user-info" style="display:none">
+      <span id="username-display"></span>
+      <span id="role-badge">viewer</span>
+      <button class="btn" id="logout-btn" onclick="logout()">Logout</button>
     </div>
   </header>
 
-  <main>
-    <div class="stat-card" id="card-pos">
-      <div class="label">Position</div>
-      <div class="value" id="pos">—</div>
+  <div id="login-screen">
+    <div class="login-box">
+      <h2>🔐 GCS Login</h2>
+      <div class="tab-btns">
+        <button class="tab-btn active" onclick="showTab('login', this)">Login</button>
+        <button class="tab-btn" onclick="showTab('register', this)">Register</button>
+      </div>
+      <div id="login-form">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="login-username" placeholder="Enter username">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="login-password" placeholder="Enter password">
+        </div>
+        <button class="btn btn-primary" onclick="doLogin()">Login</button>
+      </div>
+      <div id="register-form" style="display:none">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" id="reg-username" placeholder="Choose username">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="reg-password" placeholder="Choose password">
+        </div>
+        <div class="form-group">
+          <label>Role</label>
+          <select id="reg-role">
+            <option value="viewer">Viewer (read-only)</option>
+            <option value="commander">Commander (full control)</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="doRegister()">Register</button>
+      </div>
+      <div id="login-error"></div>
     </div>
-    <div class="stat-card" id="card-battery">
-      <div class="label">Battery</div>
-      <div class="value" id="battery">—</div>
+  </div>
+
+  <div id="dashboard">
+    <div class="panel">
+      <h3>📡 Robot Status</h3>
+      <div id="connection-status">
+        <div class="dot" id="conn-dot"></div>
+        <span id="conn-text">Connecting...</span>
+      </div>
+      <div class="status-grid">
+        <div class="status-card">
+          <div class="label">Position X</div>
+          <div class="value" id="stat-x">--</div>
+        </div>
+        <div class="status-card">
+          <div class="label">Position Y</div>
+          <div class="value" id="stat-y">--</div>
+        </div>
+        <div class="status-card">
+          <div class="label">Battery</div>
+          <div class="value" id="stat-battery">--%</div>
+        </div>
+        <div class="status-card">
+          <div class="label">State</div>
+          <div class="value" id="stat-state">--</div>
+        </div>
+      </div>
     </div>
-    <div class="stat-card">
-      <div class="label">Status</div>
-      <div class="value" style="font-size:1.1rem" id="robot-status">—</div>
+    <div class="panel">
+      <h3>🗺️ Robot Grid (21x21)</h3>
+      <div id="robot-grid"></div>
     </div>
-    <div class="stat-card">
-      <div class="label">Robot ID</div>
-      <div class="value" style="font-size:1rem" id="robot-id">—</div>
+    <div class="panel">
+      <h3>🎮 Robot Controls</h3>
+      <div id="commander-only">⚠️ You are a Viewer. Move commands are disabled.</div>
+      <div id="control-inputs">
+        <div class="coord-inputs">
+          <div><label>X Coordinate (0-20)</label><input type="number" id="move-x" min="0" max="20" value="10"></div>
+          <div><label>Y Coordinate (0-20)</label><input type="number" id="move-y" min="0" max="20" value="10"></div>
+        </div>
+        <button class="btn btn-primary" id="move-btn" onclick="doMove()">🚀 Move Robot</button>
+        <button class="btn btn-danger" style="margin-top:8px" onclick="doReset()">🔄 Reset Robot</button>
+        <div id="move-result"></div>
+      </div>
     </div>
-  </main>
+    <div class="panel">
+      <h3>📋 Mission Audit Log</h3>
+      <div id="logs-container">
+        <div style="color:#8899aa; font-size:0.8rem">Loading logs...</div>
+      </div>
+    </div>
+  </div>
 
   <script>
-    const $ = id => document.getElementById(id);
+    const API = 'http://localhost:8000';
+    let currentToken = null;
+    let currentUser = null;
+    let statusInterval = null;
+    let logsInterval = null;
 
-    async function poll() {
+    function showTab(tab, el) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
+      document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
+      document.getElementById('login-error').textContent = '';
+    }
+
+    async function doLogin() {
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+      if (!username || !password) { document.getElementById('login-error').textContent = 'Please fill in all fields'; return; }
       try {
-        const r = await fetch('/api/status');
-        if (!r.ok) throw new Error(r.statusText);
-        const d = await r.json();
+        const res = await fetch(`${API}/api/login?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`, { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok) { document.getElementById('login-error').textContent = data.detail || 'Login failed'; return; }
+        currentToken = data.token;
+        currentUser = { username: data.username, role: data.role };
+        showDashboard();
+      } catch (e) { document.getElementById('login-error').textContent = 'Cannot connect to server'; }
+    }
 
-        $('conn-dot').className = 'conn-indicator ok';
-        $('conn-label').textContent = 'Connected';
+    async function doRegister() {
+      const username = document.getElementById('reg-username').value.trim();
+      const password = document.getElementById('reg-password').value;
+      const role = document.getElementById('reg-role').value;
+      if (!username || !password) { document.getElementById('login-error').textContent = 'Please fill in all fields'; return; }
+      try {
+        const res = await fetch(`${API}/api/register?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&role=${role}`, { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok) { document.getElementById('login-error').textContent = data.detail || 'Registration failed'; return; }
+        document.getElementById('login-error').style.color = '#2ecc71';
+        document.getElementById('login-error').textContent = '✅ Registered! Please login.';
+      } catch (e) { document.getElementById('login-error').textContent = 'Cannot connect to server'; }
+    }
 
-        $('robot-id').textContent = d.id ?? '—';
-        $('pos').textContent = d.position ? `(${d.position.x}, ${d.position.y})` : '—';
-        $('robot-status').textContent = d.status ?? '—';
+    function showDashboard() {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('dashboard').classList.add('visible');
+      document.getElementById('user-info').style.display = 'flex';
+      document.getElementById('username-display').textContent = currentUser.username;
+      const badge = document.getElementById('role-badge');
+      badge.textContent = currentUser.role;
+      badge.className = `role-badge ${currentUser.role}`;
+      if (currentUser.role === 'viewer') {
+        document.getElementById('control-inputs').style.display = 'none';
+        document.getElementById('commander-only').style.display = 'block';
+      }
+      buildGrid();
+      startPolling();
+    }
 
-        if (d.battery !== undefined) {
-          $('battery').textContent = `${d.battery.toFixed(1)}%`;
-          const card = $('card-battery');
-          card.className = 'stat-card' + (d.battery < 20 ? ' danger' : d.battery < 40 ? ' warn' : '');
-        }
-      } catch {
-        $('conn-dot').className = 'conn-indicator error';
-        $('conn-label').textContent = 'Unreachable';
+    function logout() {
+      currentToken = null; currentUser = null;
+      clearInterval(statusInterval); clearInterval(logsInterval);
+      document.getElementById('login-screen').style.display = 'flex';
+      document.getElementById('dashboard').classList.remove('visible');
+      document.getElementById('user-info').style.display = 'none';
+      document.getElementById('conn-dot').className = 'dot';
+    }
+
+    function buildGrid() {
+      const grid = document.getElementById('robot-grid');
+      grid.innerHTML = '';
+      for (let i = 0; i < 441; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'grid-cell';
+        cell.id = `cell-${i}`;
+        grid.appendChild(cell);
       }
     }
 
-    poll();
-    setInterval(poll, 3000);
-  </script>
+    function updateGrid(x, y) {
+      document.querySelectorAll('.grid-cell').forEach(c => c.classList.remove('robot'));
+      const cell = document.getElementById(`cell-${y * 21 + x}`);
+      if (cell) cell.classList.add('robot');
+    }
 
+    async function fetchStatus() {
+      try {
+        const res = await fetch(`${API}/api/status`);
+        const data = await res.json();
+        if (data.error) { setDisconnected(); return; }
+        setConnected();
+        document.getElementById('stat-x').textContent = data.position?.x ?? '--';
+        document.getElementById('stat-y').textContent = data.position?.y ?? '--';
+        const battery = data.battery ?? 0;
+        const battEl = document.getElementById('stat-battery');
+        battEl.textContent = `${battery}%`;
+        battEl.className = 'value ' + (battery > 50 ? 'ok' : battery > 20 ? 'warning' : 'danger');
+        document.getElementById('stat-state').textContent = data.status ?? '--';
+        if (data.position?.x !== undefined) updateGrid(data.position.x, data.position.y);
+      } catch (e) { setDisconnected(); }
+    }
+
+    function setConnected() {
+      document.getElementById('conn-dot').className = 'dot connected';
+      document.getElementById('conn-text').textContent = 'Connected';
+    }
+
+    function setDisconnected() {
+      document.getElementById('conn-dot').className = 'dot reconnecting';
+      document.getElementById('conn-text').textContent = 'Reconnecting...';
+    }
+
+    async function fetchLogs() {
+      if (!currentToken) return;
+      try {
+        const res = await fetch(`${API}/api/logs?token=${encodeURIComponent(currentToken)}`);
+        const data = await res.json();
+        const container = document.getElementById('logs-container');
+        if (!data.logs || data.logs.length === 0) { container.innerHTML = '<div style="color:#8899aa">No commands logged yet.</div>'; return; }
+        container.innerHTML = data.logs.map(log => `
+        <div class="log-entry">
+          <span class="time">${log.timestamp.substring(11, 19)}</span>
+          <span class="action ${log.action}">${log.action}</span>
+          <span class="user">${log.username} — ${log.details}</span>
+        </div>`).join('');
+      } catch (e) { }
+    }
+
+    function startPolling() {
+      fetchStatus(); fetchLogs();
+      statusInterval = setInterval(fetchStatus, 2000);
+      logsInterval = setInterval(fetchLogs, 3000);
+    }
+
+    async function doMove() {
+      const x = parseInt(document.getElementById('move-x').value);
+      const y = parseInt(document.getElementById('move-y').value);
+      if (isNaN(x) || isNaN(y) || x < 0 || x > 20 || y < 0 || y > 20) {
+        document.getElementById('move-result').innerHTML = '<span class="error">❌ Coordinates must be 0-20</span>'; return;
+      }
+      document.getElementById('move-result').innerHTML = '<span style="color:#f39c12">⏳ Sending command...</span>';
+      try {
+        const res = await fetch(`${API}/api/move/secure?x=${x}&y=${y}&token=${encodeURIComponent(currentToken)}`, { method: 'POST' });
+        const data = await res.json();
+        if (res.ok) {
+          document.getElementById('move-result').innerHTML = '<span class="success">✅ Move command sent!</span>';
+          fetchStatus(); fetchLogs();
+        } else {
+          document.getElementById('move-result').innerHTML = `<span class="error">❌ ${data.detail}</span>`;
+        }
+      } catch (e) { document.getElementById('move-result').innerHTML = '<span class="error">❌ Connection error</span>'; }
+    }
+
+    async function doReset() {
+      if (!confirm('Reset robot to starting position?')) return;
+      try {
+        const res = await fetch(`${API}/api/reset/secure?token=${encodeURIComponent(currentToken)}`, { method: 'POST' });
+        const data = await res.json();
+        if (res.ok) {
+          document.getElementById('move-result').innerHTML = '<span class="success">✅ Robot reset!</span>';
+          fetchStatus(); fetchLogs();
+        } else {
+          document.getElementById('move-result').innerHTML = `<span class="error">❌ ${data.detail}</span>`;
+        }
+      } catch (e) { document.getElementById('move-result').innerHTML = '<span class="error">❌ Connection error</span>'; }
+    }
+  </script>
 </body>
 
 </html>
