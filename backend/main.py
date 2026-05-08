@@ -42,6 +42,9 @@ from legacy_stats import router as legacy_stats_router
 
 from robot_client import robot, RobotConnectionError
 
+from database import init_db, log_mission, get_connection
+from auth import hash_password, verify_password, create_token, verify_token
+
 # ── Configuration from environment variables ───────────────────────────────
 # os.getenv(key, default) reads a value from the process environment.
 # If the variable is not set, the second argument is used as a fallback.
@@ -116,6 +119,13 @@ app.add_middleware(
 # 2. ADD THIS LINE ANYWHERE AFTER 'app = FastAPI(...)'
 # This physically attaches the bad code to your live server
 app.include_router(legacy_stats_router)
+
+
+@app.on_event("startup")
+def startup():
+    """Run when the server starts — creates database tables."""
+    init_db()
+    logger.info("Database ready.")
 
 
 # ── Health check ───────────────────────────────────────────────────────────
@@ -227,6 +237,94 @@ async def reset_robot():
     """Reset the robot to its starting position."""
     try:
         result = await robot.reset()
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+
+# ── Auth routes ────────────────────────────────────────────────────────────
+
+
+@app.post("/api/register")
+def register(username: str, password: str, role: str = "viewer"):
+    """Register a new user."""
+    if role not in ("viewer", "commander"):
+        raise HTTPException(status_code=400, detail="Role must be viewer or commander")
+    conn = get_connection()
+    existing = conn.execute(
+        "SELECT id FROM users WHERE username = ?", (username,)
+    ).fetchone()
+    if existing:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Username already exists")
+    conn.execute(
+        "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+        (username, hash_password(password), role),
+    )
+    conn.commit()
+    conn.close()
+    return {"message": f"User {username} created with role {role}"}
+
+
+@app.post("/api/login")
+def login(username: str, password: str):
+    """Login and get a token."""
+    conn = get_connection()
+    user = conn.execute(
+        "SELECT * FROM users WHERE username = ?", (username,)
+    ).fetchone()
+    conn.close()
+    if not user or not verify_password(password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    token = create_token(username, user["role"])
+    return {"token": token, "role": user["role"], "username": username}
+
+
+@app.get("/api/logs")
+def get_logs(token: str):
+    """Get mission logs - any authenticated user can view."""
+    user = verify_token(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    conn = get_connection()
+    logs = conn.execute(
+        "SELECT * FROM mission_logs ORDER BY timestamp DESC LIMIT 50"
+    ).fetchall()
+    conn.close()
+    return {"logs": [dict(row) for row in logs]}
+
+
+# ── Update move to require Commander role ──────────────────────────────────
+
+
+@app.post("/api/move/secure")
+async def move_robot_secure(x: int, y: int, token: str):
+    """Move robot - Commander only."""
+    user = verify_token(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    if user["role"] != "commander":
+        raise HTTPException(status_code=403, detail="Commanders only")
+    try:
+        result = await robot.move(x, y)
+        log_mission(user["username"], "MOVE", f"x={x}, y={y}", str(result))
+        return result
+    except Exception as e:
+        log_mission(user["username"], "MOVE_FAILED", f"x={x}, y={y}", str(e))
+        raise HTTPException(status_code=503, detail=str(e))
+
+
+@app.post("/api/reset/secure")
+async def reset_robot_secure(token: str):
+    """Reset robot - Commander only."""
+    user = verify_token(token)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    if user["role"] != "commander":
+        raise HTTPException(status_code=403, detail="Commanders only")
+    try:
+        result = await robot.reset()
+        log_mission(user["username"], "RESET", "robot reset", str(result))
         return result
     except Exception as e:
         raise HTTPException(status_code=503, detail=str(e))
