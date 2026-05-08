@@ -4,8 +4,9 @@ Tests password hashing and token creation/verification.
 """
 
 import sys
+import os
 
-sys.path.insert(0, "/workspace/backend")
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from auth import hash_password, verify_password, create_token, verify_token
 
