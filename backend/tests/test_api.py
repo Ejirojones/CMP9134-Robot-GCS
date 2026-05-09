@@ -71,3 +71,43 @@ def test_unauthenticated_move():
     """No token should return 401."""
     response = client.post("/api/move/secure?x=5&y=5&token=invalidtoken")
     assert response.status_code == 401
+
+
+# Legacy Stats Tests
+
+
+def test_mission_stats_recon():
+    """Successful Recon mission (Type 1) should return a score."""
+    response = client.post(
+        "/api/mission_stats",
+        json={"type": 1, "dist": 100, "batt": 80, "payload_weight": 0},
+    )
+    assert response.status_code == 200
+    assert response.json()["mission"] == "recon"
+    assert response.json()["final_score"] > 0
+
+
+def test_mission_stats_transport_heavy_payload():
+    """Transport mission (Type 2) with payload > 50 should deduct score."""
+    response = client.post(
+        "/api/mission_stats",
+        json={"type": 2, "dist": 100, "batt": 50, "payload_weight": 60},
+    )
+    assert response.status_code == 200
+    assert response.json()["mission"] == "transport"
+
+
+def test_mission_stats_missing_field():
+    """Request missing required field should return 422."""
+    response = client.post("/api/mission_stats", json={"type": 1, "dist": 100})
+    assert response.status_code == 422
+
+
+def test_mission_stats_score_capped():
+    """Score should never exceed 100."""
+    response = client.post(
+        "/api/mission_stats",
+        json={"type": 1, "dist": 10000, "batt": 1, "payload_weight": 0},
+    )
+    assert response.status_code == 200
+    assert response.json()["final_score"] <= 100
