@@ -36,26 +36,36 @@ class RobotClient:
             raise RobotConnectionError(f"Robot unreachable: {exc}") from exc
 
     async def move(self, x: int, y: int) -> dict[str, Any]:
-        """Send move command to robot."""
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f"{self._base}/api/move", json={"x": x, "y": y}, timeout=10.0
-                )
-                response.raise_for_status()
-                return response.json()
-        except Exception as exc:
-            raise RobotConnectionError(f"Move failed: {exc}") from exc
+        """Send move command with retry logic for chaos monkey."""
+        last_error = None
+        for attempt in range(3):
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(
+                        f"{self._base}/api/move", json={"x": x, "y": y}, timeout=10.0
+                    )
+                    response.raise_for_status()
+                    return response.json()
+            except Exception as exc:
+                last_error = exc
+                logger.warning("Move attempt %d failed: %s", attempt + 1, exc)
+        raise RobotConnectionError(f"Move failed after 3 attempts: {last_error}")
 
     async def reset(self) -> dict[str, Any]:
-        """Reset robot to starting position."""
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(f"{self._base}/api/reset", timeout=10.0)
-                response.raise_for_status()
-                return response.json()
-        except Exception as exc:
-            raise RobotConnectionError(f"Reset failed: {exc}") from exc
+        """Reset robot with retry logic for chaos monkey."""
+        last_error = None
+        for attempt in range(3):
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(
+                        f"{self._base}/api/reset", timeout=10.0
+                    )
+                    response.raise_for_status()
+                    return response.json()
+            except Exception as exc:
+                last_error = exc
+                logger.warning("Reset attempt %d failed: %s", attempt + 1, exc)
+        raise RobotConnectionError(f"Reset failed after 3 attempts: {last_error}")
 
 
 # Module-level singleton used by main.py
