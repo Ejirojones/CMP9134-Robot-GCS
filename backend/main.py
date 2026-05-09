@@ -13,6 +13,9 @@ from robot_client import robot, RobotConnectionError
 from database import init_db, log_mission, get_connection
 from auth import hash_password, verify_password, create_token, verify_token
 
+#  Feature Flags
+ENABLE_ADVANCED_STATS = os.getenv("FF_ADVANCED_STATS", "false").lower() == "true"
+
 # Configuration
 ROBOT_API_URL = os.getenv("ROBOT_API_URL", "http://robot-api:5000")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "info")
@@ -170,3 +173,13 @@ async def reset_robot_secure(token: str):
         return result
     except Exception as e:
         raise HTTPException(status_code=503, detail=str(e))
+
+    # Feature Flag Route
+
+
+@app.get("/api/experimental_stats")
+def get_experimental_stats():
+    """Advanced stats endpoint — controlled by feature flag FF_ADVANCED_STATS."""
+    if not ENABLE_ADVANCED_STATS:
+        raise HTTPException(status_code=404, detail="Feature not yet available.")
+    return {"status": "success", "data": "Advanced mission statistics enabled!"}
