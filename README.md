@@ -83,3 +83,63 @@ Suggested areas (see the assessment brief for full requirements):
 ├── docker-compose.yml      # Stack orchestration (database section commented out)
 └── docs/report.md          # Assessment report template
 ```
+## System Architecture
+
+```mermaid
+graph TB
+    subgraph Browser["User Browser"]
+        USER[👤 User]
+    end
+
+    subgraph GCS["Ground Control Station (Docker Compose Network)"]
+        subgraph Frontend["Frontend Container (Nginx :80)"]
+            HTML["HTML/CSS/JS Dashboard"]
+        end
+
+        subgraph Backend["Backend Container (Uvicorn :8000)"]
+            API["FastAPI Application"]
+            AUTH["Auth Service (HMAC Tokens)"]
+            RBAC["RBAC Middleware"]
+            LOGGER["Mission Logger"]
+        end
+
+        subgraph Database["Data Layer"]
+            DB[(SQLite DB - Users + Logs)]
+        end
+    end
+
+    subgraph RobotContainer["Virtual Robot Container (:5000)"]
+        ROBOT["Robot Simulator REST API"]
+    end
+
+    USER -->|HTTP :80| HTML
+    HTML -->|REST API calls| API
+    API --> AUTH
+    API --> RBAC
+    API --> LOGGER
+    LOGGER -->|Read/Write| DB
+    AUTH -->|Read| DB
+    API -->|POST /api/move| ROBOT
+```
+
+## Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/Ejirojones/CMP9134-Robot-GCS.git
+
+# Start all services
+docker compose up --build
+
+# Access the dashboard
+open http://localhost:80
+```
+
+## Features
+- 🔐 User authentication with HMAC-signed tokens
+- 👥 Role-Based Access Control (Commander / Viewer)
+- 🤖 Real-time robot telemetry and 21x21 grid
+- 📋 Mission audit logging
+- ✅ 14 automated tests
+- 🚀 CI/CD pipeline with GitHub Actions
+- 🐳 Full Docker containerisation
