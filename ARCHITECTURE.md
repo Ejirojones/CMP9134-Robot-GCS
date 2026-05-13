@@ -113,4 +113,23 @@ graph TB
     UI -->|REST API calls| API
     API -->|Read/Write| DB
     API -->|POST /api/move\nGET /api/status| Robot
+    
 ```
+## 7. Architecture Trade-offs
+
+### Polling vs WebSockets
+The dashboard polls `/api/status` every 2 seconds rather than using 
+WebSockets for real-time push updates.
+
+**Why polling was chosen:**
+- REST endpoints are stateless and easily unit tested
+- The Virtual Robot API uses REST — matching protocols reduces complexity
+- 2-second polling is sufficient for a warehouse robot control system
+- WebSockets introduce persistent connection management complexity
+
+**What was sacrificed:**
+- True real-time updates (2 second maximum delay)
+- Slightly higher server load from repeated requests
+
+This decision follows Beck's (2000) principle of choosing the simplest 
+solution that meets the requirements.
